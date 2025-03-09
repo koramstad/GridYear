@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Multi-Month Calendar</title>
+    <style>
+      :root {
+        --primary: #2c3e50;
+        --secondary: #34495e;
+        --accent: #3498db;
+        --background: #f8f9fa;
+        --text: #2c3e50;
+        --selection: #3498db33;
+        --weekend: #ffebee;
+        --today: #ffeeba;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        min-width: 400px;
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        height: 100vh;
+        background: var(--background);
+        color: var(--text);
+      }
+
+      .nav-bar {
+        background: var(--primary);
+        color: white;
+        padding: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+
+      .calendar-container {
+        padding: 20px;
+        overflow-y: auto;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+        gap: 20px;
+        min-height: 0;
+      }
+
+      .month-grid {
+        display: grid;
+        grid-template-columns: 50px repeat(7, 1fr);
+        gap: 8px;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        user-select: none;
+        min-width: 300px;
+      }
+
+      .month-header {
+        grid-column: 1 / -1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem;
+        background: var(--secondary);
+        color: white;
+        border-radius: 8px 8px 0 0;
+        white-space: nowrap;
+      }
+
+      .week-number-col {
+        text-align: center;
+        font-weight: bold;
+        padding: 8px;
+        min-width: 50px;
+      }
+
+      .day-header {
+        text-align: center;
+        font-weight: bold;
+        padding: 8px;
+        white-space: nowrap;
+        min-width: 42px;
+      }
+
+      .week-row {
+        display: contents;
+      }
+
+      .week-number {
+        text-align: center;
+        padding: 8px;
+        background: #f1f1f1;
+        min-width: 50px;
+      }
+
+      .day {
+        text-align: center;
+        padding: 8px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.2s;
+        position: relative;
+        min-width: 42px;
+      }
+
+      .day:hover {
+        background: #f8f9fa;
+      }
+
+      .selected {
+        background: var(--accent) !important;
+        color: white !important;
+      }
+
+      .range {
+        background: var(--selection);
+      }
+
+      .weekend {
+        background: var(--weekend);
+      }
+
+      .saturday {
+        color: #6c757d;
+      }
+
+      .today {
+        background: var(--today);
+        font-weight: bold;
+        border: 2px solid var(--accent);
+      }
+
+      .footer {
+        background: var(--primary);
+        color: white;
+        padding: 1rem;
+        text-align: center;
+        position: sticky;
+        bottom: 0;
+        box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      button {
+        background: var(--accent);
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        cursor: pointer;
+        margin: 0.25rem;
+      }
+
+      button:hover {
+        background: #217dbb;
+      }
+
+      @media (max-width: 320px) {
+        .nav-bar {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="nav-bar">
+      <div class="nav-controls">
+        <button onclick="prevYear()">&#9664;&#9664;</button>
+        <button onclick="prevMonth()">&#9664;</button>
+        <button onclick="nextMonth()">&#9654;</button>
+        <button onclick="nextYear()">&#9654;&#9654;</button>
+      </div>
+      <div class="date-display" id="currentDateDisplay"></div>
+      <button onclick="goToToday()">Today</button>
+    </div>
+
+    <div
+      class="calendar-container"
+      id="calendar"
+      onscroll="handleScroll()"
+    ></div>
+
+    <div class="footer" id="selectionFooter">No dates selected</div>
+
+    <script>
+      const today = new Date();
+      let currentDate = new Date(today);
+      let selectedStartDate = null;
+      let selectedEndDate = null;
+      let lastLoadedMonth = 0;
+      const monthsPerLoad = 12;
+
+      function getISOWeek(date) {
+        const day = new Date(date);
+        day.setHours(0, 0, 0, 0);
+        day.setDate(day.getDate() + 4 - (day.getDay() || 7));
+        const yearStart = new Date(day.getFullYear(), 0, 1);
+        return Math.ceil(((day - yearStart) / 8.64e7 + 1) / 7);
+      }
+
+      function renderCalendar() {
+        const container = document.getElementById("calendar");
+
+        // Preserve existing months
+        const existingMonths = container.querySelectorAll(".month-grid").length;
+
+        for (let i = existingMonths; i < lastLoadedMonth + monthsPerLoad; i++) {
+          const tempDate = new Date(currentDate);
+          tempDate.setMonth(currentDate.getMonth() + i);
+          container.appendChild(createMonthGrid(tempDate));
+        }
+
+        lastLoadedMonth += monthsPerLoad;
+        updateDateDisplay();
+        updateSelectionFooter();
+      }
+
+      function createMonthGrid(date) {
+        const monthDiv = document.createElement("div");
+        monthDiv.className = "month-grid";
+
+        // Header
+        const header = document.createElement("div");
+        header.className = "month-header";
+        header.textContent = date.toLocaleDateString("en-GB", {
+          month: "long",
+          year: "numeric",
+        });
+        monthDiv.appendChild(header);
+
+        // Week number column header
+        const weekHeader = document.createElement("div");
+        weekHeader.className = "week-number-col";
+        weekHeader.textContent = "Wk";
+        monthDiv.appendChild(weekHeader);
+
+        // Week headers
+        const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+        weekDays.forEach((day, index) => {
+          const dayHeader = document.createElement("div");
+          dayHeader.className = "day-header";
+          dayHeader.textContent = day;
+          if (index === 5) dayHeader.classList.add("saturday");
+          monthDiv.appendChild(dayHeader);
+        });
+
+        // Get first day of month
+        const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
+        const startingDay = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+
+        // Get number of days in month
+        const daysInMonth = new Date(
+          date.getFullYear(),
+          date.getMonth() + 1,
+          0
+        ).getDate();
+
+        let dayCount = 1;
+        let weekNumber = getISOWeek(
+          new Date(date.getFullYear(), date.getMonth(), dayCount)
+        );
+
+        // Create calendar grid
+        for (let week = 0; week < 6; week++) {
+          const weekRow = document.createElement("div");
+          weekRow.className = "week-row";
+
+          // Week number
+          const weekNumDiv = document.createElement("div");
+          weekNumDiv.className = "week-number";
+          weekNumDiv.textContent = weekNumber;
+          weekRow.appendChild(weekNumDiv);
+
+          for (let day = 0; day < 7; day++) {
+            const dayDiv = document.createElement("div");
+            dayDiv.className = "day";
+
+            if (week === 0 && day < startingDay) {
+              dayDiv.textContent = "";
+            } else if (dayCount > daysInMonth) {
+              dayDiv.textContent = "";
+            } else {
+              dayDiv.textContent = dayCount;
+              dayDiv.dataset.date = new Date(
+                date.getFullYear(),
+                date.getMonth(),
+                dayCount
+              )
+                .toISOString()
+                .slice(0, 10);
+              dayCount++;
+            }
+
+            if (dayDiv.textContent) {
+              dayDiv.addEventListener("click", (e) =>
+                handleDateClick(e, dayDiv.dataset.date)
+              );
+              if (day === 5 || day === 6) dayDiv.classList.add("weekend");
+              if (day === 5) dayDiv.classList.add("saturday");
+              if (isToday(dayDiv.dataset.date)) dayDiv.classList.add("today");
+            }
+
+            weekRow.appendChild(dayDiv);
+          }
+
+          weekNumber = getISOWeek(
+            new Date(date.getFullYear(), date.getMonth(), dayCount)
+          );
+          monthDiv.appendChild(weekRow);
+        }
+
+        return monthDiv;
+      }
+
+      function handleDateClick(e, dateStr) {
+        e.preventDefault();
+
+        if (e.shiftKey) {
+          if (!selectedStartDate) {
+            selectedStartDate = new Date(dateStr);
+          } else {
+            selectedEndDate = new Date(dateStr);
+            if (selectedEndDate < selectedStartDate) {
+              [selectedStartDate, selectedEndDate] = [
+                selectedEndDate,
+                selectedStartDate,
+              ];
+            }
+          }
+        } else {
+          selectedStartDate = new Date(dateStr);
+          selectedEndDate = null;
+        }
+
+        updateSelectionFooter();
+        document.querySelectorAll(".month-grid").forEach((grid) => {
+          grid.querySelectorAll(".day").forEach((day) => {
+            day.classList.remove("selected", "range");
+            if (day.dataset.date) {
+              const date = new Date(day.dataset.date);
+              if (selectedStartDate && selectedEndDate) {
+                if (date >= selectedStartDate && date <= selectedEndDate) {
+                  day.classList.add("range");
+                }
+              }
+              if (
+                selectedStartDate &&
+                date.toDateString() === selectedStartDate.toDateString()
+              ) {
+                day.classList.add("selected");
+              }
+              if (
+                selectedEndDate &&
+                date.toDateString() === selectedEndDate.toDateString()
+              ) {
+                day.classList.add("selected");
+              }
+            }
+          });
+        });
+      }
+
+      function updateSelectionFooter() {
+        const footer = document.getElementById("selectionFooter");
+        if (selectedStartDate && selectedEndDate) {
+          const timeDiff = Math.abs(selectedEndDate - selectedStartDate);
+          const days = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1;
+          footer.textContent = `Selected: ${selectedStartDate.toDateString()} - ${selectedEndDate.toDateString()} (${days} days)`;
+        } else if (selectedStartDate) {
+          footer.textContent = `Selected: ${selectedStartDate.toDateString()}`;
+        } else {
+          footer.textContent = "No dates selected";
+        }
+      }
+
+      function prevMonth() {
+        currentDate.setMonth(currentDate.getMonth() - 1);
+        resetCalendar();
+      }
+
+      function nextMonth() {
+        currentDate.setMonth(currentDate.getMonth() + 1);
+        resetCalendar();
+      }
+
+      function prevYear() {
+        currentDate.setFullYear(currentDate.getFullYear() - 1);
+        resetCalendar();
+      }
+
+      function nextYear() {
+        currentDate.setFullYear(currentDate.getFullYear() + 1);
+        resetCalendar();
+      }
+
+      function goToToday() {
+        currentDate = new Date(today);
+        resetCalendar();
+      }
+
+      function updateDateDisplay() {
+        document.getElementById("currentDateDisplay").textContent =
+          currentDate.toLocaleDateString("en-GB", {
+            month: "long",
+            year: "numeric",
+          });
+      }
+
+      function handleScroll() {
+        const container = document.getElementById("calendar");
+        if (
+          container.scrollTop + container.clientHeight >=
+          container.scrollHeight - 500
+        ) {
+          renderCalendar();
+        }
+      }
+
+      function isToday(dateStr) {
+        const date = new Date(dateStr);
+        return date.toDateString() === today.toDateString();
+      }
+
+      function resetCalendar() {
+        lastLoadedMonth = 0;
+        document.getElementById("calendar").innerHTML = "";
+        renderCalendar();
+      }
+
+      // Disable text selection during range selection
+      document.addEventListener("keydown", (e) => {
+        if (e.shiftKey) {
+          document.body.style.userSelect = "none";
+        }
+      });
+
+      document.addEventListener("keyup", () => {
+        document.body.style.userSelect = "";
+      });
+
+      // Initial render
+      renderCalendar();
+    </script>
+  </body>
+</html>
