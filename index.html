@@ -236,7 +236,8 @@
       let selectedStartDate = null;
       let selectedEndDate = null;
       let lastLoadedMonth = 0;
-      const monthsPerLoad = 12;
+      let monthsPerLoad = 12;
+      const initialMonthsToLoad = 36;
 
       function getISOWeek(date) {
         const day = new Date(date);
@@ -251,14 +252,16 @@
 
         // Preserve existing months
         const existingMonths = container.querySelectorAll(".month-grid").length;
+        const toLoad =
+          lastLoadedMonth === 0 ? initialMonthsToLoad : monthsPerLoad; // Load initialMonthsToLoad on first load.
 
-        for (let i = existingMonths; i < lastLoadedMonth + monthsPerLoad; i++) {
+        for (let i = existingMonths; i < lastLoadedMonth + toLoad; i++) {
           const tempDate = new Date(currentDate);
           tempDate.setMonth(currentDate.getMonth() + i);
           container.appendChild(createMonthGrid(tempDate));
         }
 
-        lastLoadedMonth += monthsPerLoad;
+        lastLoadedMonth += toLoad;
         updateDateDisplay();
         updateSelectionFooter();
       }
