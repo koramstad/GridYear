@@ -38,8 +38,13 @@
         position: sticky;
         top: 0;
         z-index: 1000;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         gap: 0.5rem;
+      }
+
+      .nav-controls {
+        flex-wrap: nowrap;
+        overflow: hidden;
       }
 
       .calendar-container {
@@ -164,6 +169,7 @@
         border-radius: 4px;
         cursor: pointer;
         margin: 0.25rem;
+        height: 30px;
       }
 
       button:hover {
@@ -191,10 +197,18 @@
           justify-content: center;
         }
       }
-      @media (max-width: 320px) {
+      @media (max-width: 420px) {
         .nav-bar {
           flex-direction: column;
           align-items: flex-start;
+        }
+        #currentDateDisplay {
+          display: none;
+        }
+      }
+      @media (max-height: 800px) {
+        #selectionFooter {
+          display: none;
         }
       }
     </style>
@@ -204,11 +218,11 @@
       <div class="nav-controls">
         <button onclick="prevYear()">&#9664;&#9664;</button>
         <button onclick="prevMonth()">&#9664;</button>
+        <button onclick="goToToday()">&#128197;</button>
         <button onclick="nextMonth()">&#9654;</button>
         <button onclick="nextYear()">&#9654;&#9654;</button>
       </div>
       <div class="date-display" id="currentDateDisplay"></div>
-      <button onclick="goToToday()">Today.</button>
     </div>
 
     <div
