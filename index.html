@@ -43,29 +43,33 @@
       }
 
       .calendar-container {
-        padding: 20px;
+        padding: 10px; /* Reduced padding for mobile */
         overflow-y: auto;
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-        gap: 20px;
+        /* Mobile optimization: single column for smaller screens */
+        grid-template-columns: repeat(
+          auto-fit,
+          minmax(350px, 1fr)
+        ); 
+        gap: 10px; 
         min-height: 0;
       }
 
       .month-grid {
         display: grid;
-        grid-template-columns: 50px repeat(7, 1fr);
-        gap: 8px;
+        grid-template-columns: 40px repeat(7, 1fr); /* Reduced week number column width */
+        gap: 4px; /* Reduced gap for mobile */
         background: white;
         border-radius: 8px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         user-select: none;
-        min-width: 300px;
+        min-width: 200px;
       }
 
       .month-header {
         grid-column: 1 / -1;
         display: flex;
-        justify-content: space-between;
+        justify-content: center; /* centered month name on mobile */
         align-items: center;
         padding: 0.5rem;
         background: var(--secondary);
@@ -77,16 +81,18 @@
       .week-number-col {
         text-align: center;
         font-weight: bold;
-        padding: 8px;
-        min-width: 50px;
+        padding: 4px;
+        min-width: 40px; /* Reduced width for mobile */
+        font-size: 0.8rem; /* Reduced font size */
       }
 
       .day-header {
         text-align: center;
         font-weight: bold;
-        padding: 8px;
+        padding: 4px; /* Reduced padding */
         white-space: nowrap;
-        min-width: 42px;
+        min-width: 30px; /* Reduced width for mobile */
+        font-size: 0.8rem; /* Reduced font size */
       }
 
       .week-row {
@@ -95,19 +101,21 @@
 
       .week-number {
         text-align: center;
-        padding: 8px;
+        padding: 4px; /* Reduced padding */
         background: #f1f1f1;
-        min-width: 50px;
+        min-width: 40px; /* Reduced width for mobile */
+        font-size: 0.8rem; /* Reduced font size */
       }
 
       .day {
         text-align: center;
-        padding: 8px;
+        padding: 4px; /* Reduced padding */
         border-radius: 4px;
         cursor: pointer;
         transition: all 0.2s;
         position: relative;
-        min-width: 42px;
+        min-width: 30px; /* Reduced width for mobile */
+        font-size: 0.9rem; /* Reduced font size */
       }
 
       .day:hover {
@@ -145,6 +153,7 @@
         position: sticky;
         bottom: 0;
         box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+        font-size: 0.9rem; /* Slightly reduce footer font-size */
       }
 
       button {
@@ -161,6 +170,27 @@
         background: #217dbb;
       }
 
+      @media (max-width: 768px) {
+        .calendar-container {
+          grid-template-columns: 1fr; /* Single column on mobile */
+        }
+
+        .month-grid {
+          grid-template-columns: 30px repeat(7, 1fr);
+        }
+        .day-header,
+        .week-number,
+        .week-number-col {
+          font-size: 0.7rem;
+        }
+
+        .day {
+          font-size: 0.8rem;
+        }
+        .nav-bar {
+          justify-content: center;
+        }
+      }
       @media (max-width: 320px) {
         .nav-bar {
           flex-direction: column;
