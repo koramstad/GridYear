@@ -52,11 +52,8 @@
         overflow-y: auto;
         display: grid;
         /* Mobile optimization: single column for smaller screens */
-        grid-template-columns: repeat(
-          auto-fit,
-          minmax(350px, 1fr)
-        ); 
-        gap: 10px; 
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 10px;
         min-height: 0;
       }
 
@@ -107,7 +104,7 @@
       .week-number {
         text-align: center;
         padding: 4px; /* Reduced padding */
-        background: #f1f1f1;
+        font-weight: bold;
         min-width: 40px; /* Reduced width for mobile */
         font-size: 0.8rem; /* Reduced font size */
       }
@@ -200,7 +197,7 @@
       @media (max-width: 420px) {
         .nav-bar {
           flex-direction: column;
-          align-items: flex-start;
+          align-items: center;
         }
         #currentDateDisplay {
           display: none;
