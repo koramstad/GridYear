@@ -353,16 +353,9 @@
             }
 
             if (dayDiv.textContent) {
-              dayDiv.addEventListener("click", (e) =>
+              dayDiv.addEventListener("mousedown", (e) =>
                 handleDateClick(e, dayDiv.dataset.date)
               );
-              dayDiv.addEventListener("touchstart", (e) =>
-                handleDateClick(e, dayDiv.dataset.date)
-              );
-              dayDiv.addEventListener("contextmenu", (e) => {
-                e.preventDefault();
-                handleDateClick(e, dayDiv.dataset.date);
-              });
               if (day === 5 || day === 6) dayDiv.classList.add("weekend");
               if (day === 5) dayDiv.classList.add("saturday");
               if (isToday(dayDiv.dataset.date)) dayDiv.classList.add("today");
@@ -388,7 +381,7 @@
           selectedStartDate &&
           clickedDate.toDateString() === selectedStartDate.toDateString();
 
-        if (e.shiftKey || e.type === "touchstart" || e.type === "contextmenu") {
+        if (e.shiftKey || e.type === "contextmenu") {
           if (!selectedStartDate) {
             selectedStartDate = new Date(dateStr);
           } else {
