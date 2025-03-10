@@ -349,12 +349,10 @@
               )
                 .toISOString()
                 .slice(0, 10);
-              onLongPress(dayDiv, () => {
+              onLongPress(dayDiv, (e) => {
                 handleDateClick(
-                  {
-                    ...new Event("touchstart"),
-                    shiftKey: false,
-                  },
+                  e,
+
                   dayDiv.dataset.date
                 );
               });
@@ -383,23 +381,34 @@
       }
 
       function onLongPress(element, callback) {
-        let timer;
-        let isLongPress = false;
-        element.addEventListener("touchstart", () => {
-          isLongPress = true;
-          timer = setTimeout(() => {
-            isLongPress = false;
-            callback();
-          }, 500);
+        var timeoutId;
+
+        element.addEventListener(
+          "touchstart",
+          function (e) {
+            e.preventDefault();
+            timeoutId = setTimeout(function () {
+              timeoutId = null;
+              e.stopPropagation();
+              callback(e);
+            }, 500);
+          },
+          { passive: false }
+        );
+
+        element.addEventListener("contextmenu", function (e) {
+          e.preventDefault();
         });
-        const cancel = () => {
-          clearTimeout(timer);
-          isLongPress = false;
-        };
-        element.addEventListener("touchend", cancel);
-        element.addEventListener("touchmove", cancel);
-        element.addEventListener("touchcancel", cancel);
+
+        element.addEventListener("touchend", function () {
+          if (timeoutId) clearTimeout(timeoutId);
+        });
+
+        element.addEventListener("touchmove", function (e) {
+          if (timeoutId) clearTimeout(timeoutId);
+        });
       }
+
       function handleDateClick(e, dateStr) {
         e.preventDefault();
 
@@ -408,7 +417,7 @@
           selectedStartDate &&
           clickedDate.toDateString() === selectedStartDate.toDateString();
 
-        if (e.shiftKey || e.type === "touchstart") {
+        if (e.shiftKey || e.type === "touchstart" || e.type === "contextmenu") {
           if (!selectedStartDate) {
             selectedStartDate = new Date(dateStr);
           } else {
