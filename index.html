@@ -212,7 +212,7 @@
       let lastLoadedMonthBackward = 0;
       let monthsPerLoad = 12;
       let maxMonths = 60;
-      const initialMonthsToLoad = 18;
+      const initialMonthsToLoad = 6;
       const footer = document.getElementById("selectionFooter");
 
       //Get year from URL
@@ -355,16 +355,26 @@
                 .toISOString()
                 .slice(0, 10);
               let touchTimer;
+              let isTouchAndHold = false;
               dayDiv.addEventListener("touchstart", (e) => {
+                isTouchAndHold = true;
                 touchTimer = setTimeout(() => {
+                  isTouchAndHold = false;
                   handleDateClick(e, dayDiv.dataset.date);
                 }, 300); // 300ms delay
               });
 
               dayDiv.addEventListener("touchend", (e) => {
                 clearTimeout(touchTimer);
+                if (isTouchAndHold) {
+                  handleDateClick(e, dayDiv.dataset.date);
+                }
+                isTouchAndHold = false;
               });
 
+              dayDiv.addEventListener("touchmove", () => {
+                isTouchAndHold = false;
+              });
               dayDiv.addEventListener("touchcancel", (e) => {
                 clearTimeout(touchTimer);
               });
