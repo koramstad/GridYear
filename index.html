@@ -349,31 +349,15 @@
               )
                 .toISOString()
                 .slice(0, 10);
-              let touchTimer;
-              let isTouchAndHold = false;
-              dayDiv.addEventListener("touchstart", (e) => {
-                isTouchAndHold = true;
-                touchTimer = setTimeout(() => {
-                  isTouchAndHold = false;
-                  handleDateClick(e, dayDiv.dataset.date);
-                }, 300); // 300ms delay
+              onLongPress(dayDiv, () => {
+                handleDateClick(
+                  {
+                    ...new Event("touchstart"),
+                    shiftKey: false,
+                  },
+                  dayDiv.dataset.date
+                );
               });
-
-              dayDiv.addEventListener("touchend", (e) => {
-                clearTimeout(touchTimer);
-                if (isTouchAndHold) {
-                  handleDateClick(e, dayDiv.dataset.date);
-                }
-                isTouchAndHold = false;
-              });
-
-              dayDiv.addEventListener("touchmove", () => {
-                isTouchAndHold = false;
-              });
-              dayDiv.addEventListener("touchcancel", (e) => {
-                clearTimeout(touchTimer);
-              });
-
               dayCount++;
             }
 
@@ -398,6 +382,24 @@
         return monthDiv;
       }
 
+      function onLongPress(element, callback) {
+        let timer;
+        let isLongPress = false;
+        element.addEventListener("touchstart", () => {
+          isLongPress = true;
+          timer = setTimeout(() => {
+            isLongPress = false;
+            callback();
+          }, 500);
+        });
+        const cancel = () => {
+          clearTimeout(timer);
+          isLongPress = false;
+        };
+        element.addEventListener("touchend", cancel);
+        element.addEventListener("touchmove", cancel);
+        element.addEventListener("touchcancel", cancel);
+      }
       function handleDateClick(e, dateStr) {
         e.preventDefault();
 
