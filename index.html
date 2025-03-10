@@ -349,13 +349,6 @@
               )
                 .toISOString()
                 .slice(0, 10);
-              onLongPress(dayDiv, (e) => {
-                handleDateClick(
-                  e,
-
-                  dayDiv.dataset.date
-                );
-              });
               dayCount++;
             }
 
@@ -363,6 +356,13 @@
               dayDiv.addEventListener("click", (e) =>
                 handleDateClick(e, dayDiv.dataset.date)
               );
+              dayDiv.addEventListener("touchstart", (e) =>
+                handleDateClick(e, dayDiv.dataset.date)
+              );
+              dayDiv.addEventListener("contextmenu", (e) => {
+                e.preventDefault();
+                handleDateClick(e, dayDiv.dataset.date);
+              });
               if (day === 5 || day === 6) dayDiv.classList.add("weekend");
               if (day === 5) dayDiv.classList.add("saturday");
               if (isToday(dayDiv.dataset.date)) dayDiv.classList.add("today");
@@ -378,35 +378,6 @@
         }
 
         return monthDiv;
-      }
-
-      function onLongPress(element, callback) {
-        var timeoutId;
-
-        element.addEventListener(
-          "touchstart",
-          function (e) {
-            e.preventDefault();
-            timeoutId = setTimeout(function () {
-              timeoutId = null;
-              e.stopPropagation();
-              callback(e);
-            }, 500);
-          },
-          { passive: false }
-        );
-
-        element.addEventListener("contextmenu", function (e) {
-          e.preventDefault();
-        });
-
-        element.addEventListener("touchend", function () {
-          if (timeoutId) clearTimeout(timeoutId);
-        });
-
-        element.addEventListener("touchmove", function (e) {
-          if (timeoutId) clearTimeout(timeoutId);
-        });
       }
 
       function handleDateClick(e, dateStr) {
