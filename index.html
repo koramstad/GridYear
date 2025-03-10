@@ -34,11 +34,16 @@
 
       .calendar-container {
         padding: 10px;
-        overflow-y: auto;
+        overflow-y: scroll;
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
         gap: 10px;
         min-height: 0;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+      .calendar-container::-webkit-scrollbar {
+        display: none;
       }
 
       .month-grid {
