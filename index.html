@@ -3,8 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Multi-Month Calendar</title>
+    <title>Calendar</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E📅%3C/text%3E%3C/svg%3E"
+    />
     <style>
+      /* ... (Your existing CSS - no changes needed) ... */
       :root {
         --primary: #2c3e50;
         --secondary: #34495e;
@@ -21,30 +26,10 @@
         font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
         min-width: 300px;
         display: grid;
-        grid-template-rows: auto 1fr auto;
+        grid-template-rows: 1fr auto;
         height: 100vh;
         background: var(--background);
         color: var(--text);
-      }
-
-      .nav-bar {
-        background: var(--primary);
-        color: white;
-        padding: 1rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        position: sticky;
-        top: 0;
-        z-index: 1000;
-        flex-wrap: nowrap;
-        gap: 0.5rem;
-      }
-
-      .nav-controls {
-        flex-wrap: nowrap;
-        overflow: hidden;
       }
 
       .calendar-container {
@@ -190,18 +175,6 @@
         .day {
           font-size: 0.8rem;
         }
-        .nav-bar {
-          justify-content: center;
-        }
-      }
-      @media (max-width: 420px) {
-        .nav-bar {
-          flex-direction: column;
-          align-items: center;
-        }
-        #currentDateDisplay {
-          display: none;
-        }
       }
       @media (max-height: 800px) {
         #selectionFooter {
@@ -211,17 +184,6 @@
     </style>
   </head>
   <body>
-    <div class="nav-bar">
-      <div class="nav-controls">
-        <button onclick="prevYear()">&#9664;&#9664;</button>
-        <button onclick="prevMonth()">&#9664;</button>
-        <button onclick="goToToday()">&#128197;</button>
-        <button onclick="nextMonth()">&#9654;</button>
-        <button onclick="nextYear()">&#9654;&#9654;</button>
-      </div>
-      <div class="date-display" id="currentDateDisplay"></div>
-    </div>
-
     <div
       class="calendar-container"
       id="calendar"
@@ -235,9 +197,10 @@
       let currentDate = new Date(today);
       let selectedStartDate = null;
       let selectedEndDate = null;
-      let lastLoadedMonth = 0;
+      let lastLoadedMonthForward = 0;
+      let lastLoadedMonthBackward = 0;
       let monthsPerLoad = 12;
-      const initialMonthsToLoad = 36;
+      const initialMonthsToLoad = 18;
 
       function getISOWeek(date) {
         const day = new Date(date);
@@ -247,22 +210,39 @@
         return Math.ceil(((day - yearStart) / 8.64e7 + 1) / 7);
       }
 
-      function renderCalendar() {
+      function renderCalendar(direction = "forward") {
         const container = document.getElementById("calendar");
+        const toLoad = monthsPerLoad;
 
-        // Preserve existing months
-        const existingMonths = container.querySelectorAll(".month-grid").length;
-        const toLoad =
-          lastLoadedMonth === 0 ? initialMonthsToLoad : monthsPerLoad; // Load initialMonthsToLoad on first load.
+        if (direction === "forward") {
+          const firstMonth = new Date(currentDate);
+          firstMonth.setMonth(currentDate.getMonth() + lastLoadedMonthForward);
 
-        for (let i = existingMonths; i < lastLoadedMonth + toLoad; i++) {
-          const tempDate = new Date(currentDate);
-          tempDate.setMonth(currentDate.getMonth() + i);
-          container.appendChild(createMonthGrid(tempDate));
+          for (let i = 0; i < toLoad; i++) {
+            const tempDate = new Date(firstMonth);
+            tempDate.setMonth(firstMonth.getMonth() + i);
+            container.appendChild(createMonthGrid(tempDate));
+          }
+
+          lastLoadedMonthForward += toLoad;
+        } else if (direction === "backward") {
+          const firstMonth = new Date(currentDate);
+          firstMonth.setMonth(
+            currentDate.getMonth() - lastLoadedMonthBackward - toLoad
+          );
+
+          const fragment = document.createDocumentFragment();
+          for (let i = 0; i < toLoad; i++) {
+            const tempDate = new Date(firstMonth);
+            tempDate.setMonth(firstMonth.getMonth() + i);
+            fragment.appendChild(createMonthGrid(tempDate));
+          }
+          container.insertBefore(fragment, container.firstChild);
+
+          lastLoadedMonthBackward += toLoad;
+          container.scrollTop = container.children[toLoad].offsetTop;
         }
 
-        lastLoadedMonth += toLoad;
-        updateDateDisplay();
         updateSelectionFooter();
       }
 
@@ -270,7 +250,6 @@
         const monthDiv = document.createElement("div");
         monthDiv.className = "month-grid";
 
-        // Header
         const header = document.createElement("div");
         header.className = "month-header";
         header.textContent = date.toLocaleDateString("en-GB", {
@@ -279,13 +258,11 @@
         });
         monthDiv.appendChild(header);
 
-        // Week number column header
         const weekHeader = document.createElement("div");
         weekHeader.className = "week-number-col";
         weekHeader.textContent = "Wk";
         monthDiv.appendChild(weekHeader);
 
-        // Week headers
         const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
         weekDays.forEach((day, index) => {
           const dayHeader = document.createElement("div");
@@ -295,11 +272,9 @@
           monthDiv.appendChild(dayHeader);
         });
 
-        // Get first day of month
         const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
         const startingDay = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
 
-        // Get number of days in month
         const daysInMonth = new Date(
           date.getFullYear(),
           date.getMonth() + 1,
@@ -311,12 +286,10 @@
           new Date(date.getFullYear(), date.getMonth(), dayCount)
         );
 
-        // Create calendar grid
         for (let week = 0; week < 6; week++) {
           const weekRow = document.createElement("div");
           weekRow.className = "week-row";
 
-          // Week number
           const weekNumDiv = document.createElement("div");
           weekNumDiv.className = "week-number";
           weekNumDiv.textContent = weekNumber;
@@ -424,46 +397,17 @@
         }
       }
 
-      function prevMonth() {
-        currentDate.setMonth(currentDate.getMonth() - 1);
-        resetCalendar();
-      }
-
-      function nextMonth() {
-        currentDate.setMonth(currentDate.getMonth() + 1);
-        resetCalendar();
-      }
-
-      function prevYear() {
-        currentDate.setFullYear(currentDate.getFullYear() - 1);
-        resetCalendar();
-      }
-
-      function nextYear() {
-        currentDate.setFullYear(currentDate.getFullYear() + 1);
-        resetCalendar();
-      }
-
-      function goToToday() {
-        currentDate = new Date(today);
-        resetCalendar();
-      }
-
-      function updateDateDisplay() {
-        document.getElementById("currentDateDisplay").textContent =
-          currentDate.toLocaleDateString("en-GB", {
-            month: "long",
-            year: "numeric",
-          });
-      }
-
       function handleScroll() {
         const container = document.getElementById("calendar");
-        if (
-          container.scrollTop + container.clientHeight >=
-          container.scrollHeight - 500
-        ) {
-          renderCalendar();
+        const scrollThresholdBottom =
+          container.scrollHeight - container.scrollTop - container.clientHeight;
+        const scrollThresholdTop = container.scrollTop;
+
+        if (scrollThresholdBottom < 500) {
+          renderCalendar("forward");
+        }
+        if (scrollThresholdTop < 1000) {
+          renderCalendar("backward");
         }
       }
 
@@ -473,12 +417,52 @@
       }
 
       function resetCalendar() {
-        lastLoadedMonth = 0;
+        lastLoadedMonthForward = 0;
+        lastLoadedMonthBackward = 0;
         document.getElementById("calendar").innerHTML = "";
-        renderCalendar();
+        initialRender();
       }
 
-      // Disable text selection during range selection
+      function initialRender() {
+        const container = document.getElementById("calendar");
+        const fragment = document.createDocumentFragment();
+
+        const firstBackwardMonth = new Date(currentDate);
+        firstBackwardMonth.setMonth(
+          currentDate.getMonth() - initialMonthsToLoad
+        );
+
+        for (let i = 0; i < initialMonthsToLoad; i++) {
+          const tempDate = new Date(firstBackwardMonth);
+          tempDate.setMonth(firstBackwardMonth.getMonth() + i);
+          fragment.appendChild(createMonthGrid(tempDate));
+        }
+        container.appendChild(fragment);
+        lastLoadedMonthBackward = initialMonthsToLoad;
+        renderCalendar("forward");
+
+        scrollToCurrentMonth();
+      }
+
+      function scrollToCurrentMonth() {
+        const container = document.getElementById("calendar");
+        const currentMonthString = today.toLocaleDateString("en-GB", {
+          month: "long",
+          year: "numeric",
+        });
+        const currentMonthElement = Array.from(
+          container.querySelectorAll(".month-header")
+        ).find((header) => header.textContent === currentMonthString);
+
+        if (currentMonthElement) {
+          const top = currentMonthElement.offsetTop;
+          container.scrollTo({
+            top: top,
+            behavior: "instant",
+          });
+        }
+      }
+
       document.addEventListener("keydown", (e) => {
         if (e.shiftKey) {
           document.body.style.userSelect = "none";
@@ -489,8 +473,7 @@
         document.body.style.userSelect = "";
       });
 
-      // Initial render
-      renderCalendar();
+      initialRender();
     </script>
   </body>
 </html>
