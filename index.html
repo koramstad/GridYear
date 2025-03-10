@@ -33,10 +33,9 @@
       }
 
       .calendar-container {
-        padding: 10px; /* Reduced padding for mobile */
+        padding: 10px;
         overflow-y: auto;
         display: grid;
-        /* Mobile optimization: single column for smaller screens */
         grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
         gap: 10px;
         min-height: 0;
@@ -44,8 +43,8 @@
 
       .month-grid {
         display: grid;
-        grid-template-columns: 40px repeat(7, 1fr); /* Reduced week number column width */
-        gap: 4px; /* Reduced gap for mobile */
+        grid-template-columns: 40px repeat(7, 1fr);
+        gap: 4px;
         background: white;
         border-radius: 8px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
@@ -56,7 +55,7 @@
       .month-header {
         grid-column: 1 / -1;
         display: flex;
-        justify-content: center; /* centered month name on mobile */
+        justify-content: center;
         align-items: center;
         padding: 0.5rem;
         background: var(--secondary);
@@ -69,17 +68,17 @@
         text-align: center;
         font-weight: bold;
         padding: 4px;
-        min-width: 40px; /* Reduced width for mobile */
-        font-size: 0.8rem; /* Reduced font size */
+        min-width: 40px;
+        font-size: 0.8rem;
       }
 
       .day-header {
         text-align: center;
         font-weight: bold;
-        padding: 4px; /* Reduced padding */
+        padding: 4px;
         white-space: nowrap;
-        min-width: 30px; /* Reduced width for mobile */
-        font-size: 0.8rem; /* Reduced font size */
+        min-width: 30px;
+        font-size: 0.8rem;
       }
 
       .week-row {
@@ -88,21 +87,21 @@
 
       .week-number {
         text-align: center;
-        padding: 4px; /* Reduced padding */
+        padding: 4px;
         font-weight: bold;
-        min-width: 40px; /* Reduced width for mobile */
-        font-size: 0.8rem; /* Reduced font size */
+        min-width: 40px;
+        font-size: 0.8rem;
       }
 
       .day {
         text-align: center;
-        padding: 4px; /* Reduced padding */
+        padding: 4px;
         border-radius: 4px;
         cursor: pointer;
         transition: all 0.2s;
         position: relative;
-        min-width: 30px; /* Reduced width for mobile */
-        font-size: 0.9rem; /* Reduced font size */
+        min-width: 30px;
+        font-size: 0.9rem;
       }
 
       .day:hover {
@@ -140,7 +139,12 @@
         position: sticky;
         bottom: 0;
         box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
-        font-size: 0.9rem; /* Slightly reduce footer font-size */
+        font-size: 0.9rem;
+        display: none; /* Hide by default */
+      }
+
+      .footer.active {
+        display: block; /* Show when active */
       }
 
       button {
@@ -160,7 +164,7 @@
 
       @media (max-width: 768px) {
         .calendar-container {
-          grid-template-columns: 1fr; /* Single column on mobile */
+          grid-template-columns: 1fr;
         }
 
         .month-grid {
@@ -178,7 +182,7 @@
       }
       @media (max-height: 800px) {
         #selectionFooter {
-          display: none;
+          display: block;
         }
       }
     </style>
@@ -201,6 +205,14 @@
       let lastLoadedMonthBackward = 0;
       let monthsPerLoad = 12;
       const initialMonthsToLoad = 18;
+      const footer = document.getElementById("selectionFooter");
+
+      //Get year from URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const startYear = parseInt(urlParams.get("year"));
+      if (!isNaN(startYear)) {
+        currentDate.setFullYear(startYear);
+      }
 
       function getISOWeek(date) {
         const day = new Date(date);
@@ -319,6 +331,9 @@
               dayDiv.addEventListener("click", (e) =>
                 handleDateClick(e, dayDiv.dataset.date)
               );
+              dayDiv.addEventListener("touchstart", (e) =>
+                handleDateClick(e, dayDiv.dataset.date)
+              );
               if (day === 5 || day === 6) dayDiv.classList.add("weekend");
               if (day === 5) dayDiv.classList.add("saturday");
               if (isToday(dayDiv.dataset.date)) dayDiv.classList.add("today");
@@ -339,24 +354,43 @@
       function handleDateClick(e, dateStr) {
         e.preventDefault();
 
-        if (e.shiftKey) {
+        const clickedDate = new Date(dateStr);
+        const isSelected =
+          selectedStartDate &&
+          clickedDate.toDateString() === selectedStartDate.toDateString();
+
+        if (e.shiftKey || e.type === "touchstart") {
           if (!selectedStartDate) {
             selectedStartDate = new Date(dateStr);
           } else {
-            selectedEndDate = new Date(dateStr);
-            if (selectedEndDate < selectedStartDate) {
-              [selectedStartDate, selectedEndDate] = [
-                selectedEndDate,
-                selectedStartDate,
-              ];
+            if (isSelected) {
+              selectedStartDate = null;
+              selectedEndDate = null;
+            } else {
+              selectedEndDate = new Date(dateStr);
+              if (selectedEndDate < selectedStartDate) {
+                [selectedStartDate, selectedEndDate] = [
+                  selectedEndDate,
+                  selectedStartDate,
+                ];
+              }
             }
           }
         } else {
-          selectedStartDate = new Date(dateStr);
-          selectedEndDate = null;
+          if (isSelected) {
+            selectedStartDate = null;
+            selectedEndDate = null;
+          } else {
+            selectedStartDate = new Date(dateStr);
+            selectedEndDate = null;
+          }
         }
 
         updateSelectionFooter();
+        updateCalendarView();
+      }
+
+      function updateCalendarView() {
         document.querySelectorAll(".month-grid").forEach((grid) => {
           grid.querySelectorAll(".day").forEach((day) => {
             day.classList.remove("selected", "range");
@@ -385,7 +419,6 @@
       }
 
       function updateSelectionFooter() {
-        const footer = document.getElementById("selectionFooter");
         if (selectedStartDate && selectedEndDate) {
           const timeDiff = Math.abs(selectedEndDate - selectedStartDate);
           const days = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1;
@@ -394,6 +427,12 @@
           footer.textContent = `Selected: ${selectedStartDate.toDateString()}`;
         } else {
           footer.textContent = "No dates selected";
+        }
+        //Show or hide the footer
+        if (selectedStartDate || selectedEndDate) {
+          footer.classList.add("active");
+        } else {
+          footer.classList.remove("active");
         }
       }
 
@@ -446,7 +485,7 @@
 
       function scrollToCurrentMonth() {
         const container = document.getElementById("calendar");
-        const currentMonthString = today.toLocaleDateString("en-GB", {
+        const currentMonthString = currentDate.toLocaleDateString("en-GB", {
           month: "long",
           year: "numeric",
         });
