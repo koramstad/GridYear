@@ -9,7 +9,6 @@
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E📅%3C/text%3E%3C/svg%3E"
     />
     <style>
-      /* ... (Your existing CSS - no changes needed) ... */
       :root {
         --primary: #2c3e50;
         --secondary: #34495e;
@@ -19,6 +18,7 @@
         --selection: #3498db33;
         --weekend: #ffebee;
         --today: #ffeeba;
+        scroll-behavior: auto;
       }
 
       body {
@@ -35,6 +35,7 @@
       .calendar-container {
         padding: 10px;
         overflow-y: scroll;
+        scroll-snap-type: y mandatory;
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
         gap: 10px;
@@ -55,6 +56,7 @@
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         user-select: none;
         min-width: 200px;
+        scroll-snap-align: start;
       }
 
       .month-header {
@@ -209,6 +211,7 @@
       let lastLoadedMonthForward = 0;
       let lastLoadedMonthBackward = 0;
       let monthsPerLoad = 12;
+      let maxMonths = 60;
       const initialMonthsToLoad = 18;
       const footer = document.getElementById("selectionFooter");
 
@@ -225,6 +228,28 @@
         day.setDate(day.getDate() + 4 - (day.getDay() || 7));
         const yearStart = new Date(day.getFullYear(), 0, 1);
         return Math.ceil(((day - yearStart) / 8.64e7 + 1) / 7);
+      }
+
+      function trimCalendar(direction) {
+        const container = document.getElementById("calendar");
+        const monthCount = container.children.length;
+
+        if (monthCount > maxMonths) {
+          const monthsToRemove = monthCount - maxMonths;
+          if (direction === "forward") {
+            for (let i = 0; i < monthsToRemove; i++) {
+              container.removeChild(container.children[0]);
+              lastLoadedMonthBackward--;
+            }
+          } else {
+            for (let i = 0; i < monthsToRemove; i++) {
+              container.removeChild(
+                container.children[container.children.length - 1]
+              );
+              lastLoadedMonthForward--;
+            }
+          }
+        }
       }
 
       function renderCalendar(direction = "forward") {
@@ -257,8 +282,8 @@
           container.insertBefore(fragment, container.firstChild);
 
           lastLoadedMonthBackward += toLoad;
-          container.scrollTop = container.children[toLoad].offsetTop;
         }
+        trimCalendar(direction); // Call trimCalendar after adding new months
 
         updateSelectionFooter();
       }
@@ -496,6 +521,10 @@
         container.appendChild(fragment);
         lastLoadedMonthBackward = initialMonthsToLoad;
         renderCalendar("forward");
+        //Ensure enough items to scroll
+        while (container.scrollHeight < container.clientHeight * 1.5) {
+          renderCalendar("forward");
+        }
 
         scrollToCurrentMonth();
       }
