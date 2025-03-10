@@ -187,11 +187,6 @@
           font-size: 0.8rem;
         }
       }
-      @media (max-height: 800px) {
-        #selectionFooter {
-          display: block;
-        }
-      }
     </style>
   </head>
   <body>
@@ -488,18 +483,29 @@
         }
       }
 
+      let isScrolling = false;
+      let scrollTimeout;
+
       function handleScroll() {
+        if (isScrolling) {
+          clearTimeout(scrollTimeout);
+        }
+        isScrolling = true;
+
         const container = document.getElementById("calendar");
         const scrollThresholdBottom =
           container.scrollHeight - container.scrollTop - container.clientHeight;
         const scrollThresholdTop = container.scrollTop;
 
-        if (scrollThresholdBottom < 500) {
-          renderCalendar("forward");
-        }
-        if (scrollThresholdTop < 1000) {
-          renderCalendar("backward");
-        }
+        scrollTimeout = setTimeout(() => {
+          if (scrollThresholdBottom < 500) {
+            renderCalendar("forward");
+          }
+          if (scrollThresholdTop < 1000) {
+            renderCalendar("backward");
+          }
+          isScrolling = false;
+        }, 50);
       }
 
       function isToday(dateStr) {
