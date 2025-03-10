@@ -324,14 +324,26 @@
               )
                 .toISOString()
                 .slice(0, 10);
+              let touchTimer;
+              dayDiv.addEventListener("touchstart", (e) => {
+                touchTimer = setTimeout(() => {
+                  handleDateClick(e, dayDiv.dataset.date);
+                }, 300); // 300ms delay
+              });
+
+              dayDiv.addEventListener("touchend", (e) => {
+                clearTimeout(touchTimer);
+              });
+
+              dayDiv.addEventListener("touchcancel", (e) => {
+                clearTimeout(touchTimer);
+              });
+
               dayCount++;
             }
 
             if (dayDiv.textContent) {
               dayDiv.addEventListener("click", (e) =>
-                handleDateClick(e, dayDiv.dataset.date)
-              );
-              dayDiv.addEventListener("touchstart", (e) =>
                 handleDateClick(e, dayDiv.dataset.date)
               );
               if (day === 5 || day === 6) dayDiv.classList.add("weekend");
