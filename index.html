@@ -305,7 +305,6 @@
           const dayHeader = document.createElement("div");
           dayHeader.className = "day-header";
           dayHeader.textContent = day;
-          if (index === 5) dayHeader.classList.add("saturday");
           monthDiv.appendChild(dayHeader);
         });
 
@@ -330,7 +329,13 @@
           const weekNumDiv = document.createElement("div");
           weekNumDiv.className = "week-number";
           weekNumDiv.textContent = weekNumber;
+          if (dayCount > daysInMonth && week > 0)
+            weekNumDiv.style.visibility = "hidden";
           weekRow.appendChild(weekNumDiv);
+
+          if (week === 0) {
+            weekRow.dataset.month = date.getMonth();
+          }
 
           for (let day = 0; day < 7; day++) {
             const dayDiv = document.createElement("div");
@@ -353,9 +358,6 @@
             }
 
             if (dayDiv.textContent) {
-              dayDiv.addEventListener("mousedown", (e) =>
-                handleDateClick(e, dayDiv.dataset.date)
-              );
               if (day === 5 || day === 6) dayDiv.classList.add("weekend");
               if (day === 5) dayDiv.classList.add("saturday");
               if (isToday(dayDiv.dataset.date)) dayDiv.classList.add("today");
@@ -372,6 +374,21 @@
 
         return monthDiv;
       }
+
+      document.getElementById("calendar").addEventListener("mousedown", (e) => {
+        const target = e.target;
+        if (target.classList.contains("day") && target.dataset.date) {
+          handleDateClick(e, target.dataset.date);
+        }
+      });
+
+      document
+        .getElementById("calendar")
+        .addEventListener("contextmenu", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          handleDateClick(e, target.dataset.date);
+        });
 
       function handleDateClick(e, dateStr) {
         e.preventDefault();
