@@ -385,9 +385,9 @@
       document
         .getElementById("calendar")
         .addEventListener("contextmenu", (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          handleDateClick(e, target.dataset.date);
+          if (e.target.classList.contains("day") && e.target.dataset.date) {
+            handleDateClick(e, e.target.dataset.date);
+          }
         });
 
       function handleDateClick(e, dateStr) {
