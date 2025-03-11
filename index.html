@@ -56,7 +56,7 @@
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         user-select: none;
         min-width: 200px;
-        scroll-snap-align: start;
+        /*scroll-snap-align: start;*/
       }
 
       .month-header {
@@ -207,7 +207,7 @@
       let lastLoadedMonthBackward = 0;
       let monthsPerLoad = 12;
       let maxMonths = 60;
-      const initialMonthsToLoad = 6;
+      const initialMonthsToLoad = 3;
       const footer = document.getElementById("selectionFooter");
 
       //Get year from URL
@@ -278,7 +278,7 @@
 
           lastLoadedMonthBackward += toLoad;
         }
-        trimCalendar(direction); // Call trimCalendar after adding new months
+        trimCalendar(direction);
 
         updateSelectionFooter();
       }
@@ -458,29 +458,18 @@
         }
       }
 
-      let isScrolling = false;
-      let scrollTimeout;
-
       function handleScroll() {
-        if (isScrolling) {
-          clearTimeout(scrollTimeout);
-        }
-        isScrolling = true;
-
         const container = document.getElementById("calendar");
         const scrollThresholdBottom =
           container.scrollHeight - container.scrollTop - container.clientHeight;
         const scrollThresholdTop = container.scrollTop;
 
-        scrollTimeout = setTimeout(() => {
-          if (scrollThresholdBottom < 500) {
-            renderCalendar("forward");
-          }
-          if (scrollThresholdTop < 1000) {
-            renderCalendar("backward");
-          }
-          isScrolling = false;
-        }, 50);
+        if (scrollThresholdBottom < 500) {
+          renderCalendar("forward");
+        }
+        if (scrollThresholdTop < 50) {
+          renderCalendar("backward");
+        }
       }
 
       function isToday(dateStr) {
