@@ -204,8 +204,7 @@
     <div class="footer" id="selectionFooter">No dates selected</div>
 
     <script>
-      const today = new Date();
-      let currentDate = new Date(today);
+      let currentDate = new Date();
       let selectedStartDate = null;
       let selectedEndDate = null;
       let lastLoadedMonthForward = 0;
@@ -672,6 +671,21 @@
         }
       }
 
+      function isToday(dateStr) {
+        const date = new Date(dateStr);
+        const today = new Date();
+        return date.toDateString() === today.toDateString();
+      }
+
+      function updateTodayHighlight() {
+        document.querySelectorAll(".day").forEach((day) => {
+          if (day.dataset.date) {
+            const isTodayNow = isToday(day.dataset.date);
+            day.classList.toggle("today", isTodayNow);
+          }
+        });
+      }
+
       document.addEventListener("keydown", (e) => {
         if (e.shiftKey) {
           document.body.style.userSelect = "none";
@@ -682,6 +696,13 @@
         document.body.style.userSelect = "";
       });
 
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") {
+          updateTodayHighlight();
+        }
+      });
+
+      setInterval(updateTodayHighlight, 60000);
       initialRender();
     </script>
   </body>
