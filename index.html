@@ -686,6 +686,25 @@
         });
       }
 
+      let midnightTimeout = null;
+
+      function getMillisecondsUntilMidnight() {
+        const now = new Date();
+        const midnight = new Date();
+        midnight.setHours(24, 0, 0, 0); // Next midnight
+        return midnight - now;
+      }
+
+      function scheduleMidnightUpdate() {
+        clearTimeout(midnightTimeout);
+        const msUntilMidnight = getMillisecondsUntilMidnight();
+
+        midnightTimeout = setTimeout(() => {
+          updateTodayHighlight();
+          scheduleMidnightUpdate(); // Reschedule for next midnight
+        }, msUntilMidnight);
+      }
+
       document.addEventListener("keydown", (e) => {
         if (e.shiftKey) {
           document.body.style.userSelect = "none";
@@ -699,10 +718,12 @@
       document.addEventListener("visibilitychange", () => {
         if (document.visibilityState === "visible") {
           updateTodayHighlight();
+          scheduleMidnightUpdate();
         }
       });
 
-      setInterval(updateTodayHighlight, 60000);
+      updateTodayHighlight();
+      scheduleMidnightUpdate();
       initialRender();
     </script>
   </body>
