@@ -359,7 +359,11 @@
         const toLoad = monthsPerLoad;
 
         if (direction === "forward") {
-          const firstMonth = new Date(currentDate);
+          const firstMonth = new Date(
+            currentDate.getFullYear(),
+            currentDate.getMonth(),
+            1
+          );
           firstMonth.setMonth(currentDate.getMonth() + lastLoadedMonthForward);
 
           for (let i = 0; i < toLoad; i++) {
@@ -370,7 +374,11 @@
 
           lastLoadedMonthForward += toLoad;
         } else if (direction === "backward") {
-          const firstMonth = new Date(currentDate);
+          const firstMonth = new Date(
+            currentDate.getFullYear(),
+            currentDate.getMonth(),
+            1
+          );
           firstMonth.setMonth(
             currentDate.getMonth() - lastLoadedMonthBackward - toLoad
           );
@@ -631,7 +639,11 @@
         const container = document.getElementById("calendar");
         const fragment = document.createDocumentFragment();
 
-        const firstBackwardMonth = new Date(currentDate);
+        const firstBackwardMonth = new Date(
+          currentDate.getFullYear(),
+          currentDate.getMonth(),
+          1
+        );
         firstBackwardMonth.setMonth(
           currentDate.getMonth() - initialMonthsToLoad
         );
